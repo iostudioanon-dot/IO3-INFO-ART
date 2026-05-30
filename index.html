@@ -815,6 +815,12 @@
       modalSummary.textContent = item.research;
       resourceGrid.innerHTML = "";
 
+      const deepDive = document.createElement("a");
+      deepDive.className = "resource-link";
+      deepDive.href = `research.html#${twoDigit(item.number)}`;
+      deepDive.textContent = "Open deep dive page";
+      resourceGrid.append(deepDive);
+
       item.links.forEach((link) => {
         const resource = document.createElement("a");
         resource.className = "resource-link";

@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>I/O3 Deep Dive Research</title>
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --charcoal: #151515;
+      --white: #ffffff;
+      --muted: #b9b9b9;
+      --quiet: #777777;
+      --accent: #d92b2b;
+      --line: rgba(255, 255, 255, 0.16);
+      --panel: rgba(255, 255, 255, 0.045);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--white);
+      background:
+        radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 34%),
+        linear-gradient(rgba(10, 10, 10, 0.24), rgba(10, 10, 10, 0.88)),
+        url("assets/gallery-context.png") center / cover fixed no-repeat,
+        var(--black);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 0 46%, rgba(0, 0, 0, 0.84) 100%);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1380px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: clamp(20px, 4vw, 56px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: clamp(28px, 5vw, 70px);
+      border-left: 2px solid var(--accent);
+      padding-left: 18px;
+    }
+
+    h1 {
+      max-width: 12ch;
+      margin: 0;
+      font-size: clamp(2.8rem, 9vw, 8rem);
+      line-height: 0.9;
+      text-transform: uppercase;
+    }
+
+    .back {
+      color: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: clamp(22px, 4vw, 64px);
+      align-items: start;
+    }
+
+    .menu {
+      position: sticky;
+      top: 24px;
+      display: grid;
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .menu a {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      color: rgba(255, 255, 255, 0.64);
+      background: rgba(10, 10, 10, 0.7);
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1.1;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 160ms ease, background 160ms ease;
+    }
+
+    .menu a:hover,
+    .menu a:focus-visible,
+    .menu a.is-active {
+      color: var(--white);
+      background: rgba(217, 43, 43, 0.12);
+      outline: none;
+    }
+
+    .menu span {
+      color: var(--accent);
+    }
+
+    .article {
+      display: none;
+      max-width: 860px;
+      padding: clamp(20px, 4vw, 46px);
+      background: rgba(10, 10, 10, 0.68);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(3px);
+    }
+
+    .article.is-active {
+      display: block;
+    }
+
+    .kicker {
+      margin: 0 0 28px;
+      color: var(--quiet);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 22px;
+      font-size: clamp(2.2rem, 6vw, 5.2rem);
+      line-height: 0.92;
+      text-transform: uppercase;
+    }
+
+    .lead {
+      margin: 0 0 26px;
+      color: var(--white);
+      font-size: clamp(1.08rem, 2vw, 1.4rem);
+      font-weight: 800;
+      max-width: 46rem;
+    }
+
+    p {
+      max-width: 48rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .source-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .source-list a {
+      color: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-left: 2px solid rgba(217, 43, 43, 0.58);
+      padding: 9px 10px;
+      font-size: 0.76rem;
+      font-weight: 900;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .source-list a:hover,
+    .source-list a:focus-visible {
+      color: var(--white);
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    @media (max-width: 880px) {
+      .topbar,
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .menu {
+        position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        padding: 18px;
+      }
+
+      .menu {
+        grid-template-columns: 1fr;
+      }
+
+      .article {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <h1>I/O3 Deep Dive</h1>
+      <a class="back" href="index.html">Back to artwork</a>
+    </header>
+
+    <div class="layout">
+      <nav class="menu" aria-label="Deep dive menu">
+        <a href="#01"><span>01</span> Atmospheric Intersection</a>
+        <a href="#02"><span>02</span> Ionospheric Activity</a>
+        <a href="#03"><span>03</span> Radiation Shield</a>
+        <a href="#04"><span>04</span> Manipulated Weather</a>
+        <a href="#05"><span>05</span> Tonal Bleaching</a>
+        <a href="#06"><span>06</span> Lightning</a>
+        <a href="#07"><span>07</span> Gas Masks</a>
+        <a href="#08"><span>08</span> Distorted Trees</a>
+        <a href="#09"><span>09</span> Radioactive Vegetation</a>
+        <a href="#10"><span>10</span> Butterfly Transition</a>
+        <a href="#11"><span>11</span> Chernobyl Plant</a>
+      </nav>
+
+      <section aria-live="polite">
+        <article class="article" id="01">
+          <p class="kicker">Marker 01</p>
+          <h2>Atmospheric Intersection</h2>
+          <p class="lead">The ionosphere is treated as an invisible frontier: not empty sky, but a charged threshold between Earth, orbit, communication, and fear.</p>
+          <p>NASA describes this upper atmospheric region as the place where neutral atmosphere begins to transition into the ionised plasma of space. That makes it an ideal subject for I/O3 because it sits between First Nature and Third Nature: a natural layer that has become part of modern technological infrastructure.</p>
+          <p>In the artwork, the upper atmospheric boundary is not just a landscape effect. It becomes a conceptual edge. Civilisation depends on this unstable layer for radio, satellite, GPS, and military systems, yet most people never see it directly. The frontier is therefore both physical and psychological.</p>
+          <div class="source-list">
+            <a href="https://science.nasa.gov/heliophysics/focus-areas/ionosphere_thermosphere_mesosphere/">NASA Ionosphere</a>
+            <a href="https://science.nasa.gov/earth/10-things-to-know-about-the-ionosphere/">NASA 10 Things</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+
+        <article class="article" id="02">
+          <p class="kicker">Marker 02</p>
+          <h2>Ionospheric Activity</h2>
+          <p class="lead">The bright charged forms suggest plasma, radio reflection, solar energy, and the unstable atmospheric systems that make global communication possible.</p>
+          <p>The ionosphere is formed when solar radiation ionises particles in the upper atmosphere. NOAA notes that this region reflects and modifies radio waves used for communication and navigation. I/O3 turns that scientific fact into an image of hidden infrastructure.</p>
+          <p>Duga depended on this same invisible activity. Its over-the-horizon radar signals were pushed into the atmosphere and read through their return echoes. The real work of the radar happened not only in the steel structure near Chernobyl, but in the charged sky above it.</p>
+          <div class="source-list">
+            <a href="https://www.spaceweather.gov/index.php/phenomena/ionosphere">NOAA Ionosphere</a>
+            <a href="https://gold.cs.ucf.edu/">NASA GOLD</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+
+        <article class="article" id="03">
+          <p class="kicker">Marker 03</p>
+          <h2>Radiation Shield</h2>
+          <p class="lead">This element points to the invisible protection systems that support life and technology, while also reminding us how fragile those systems are.</p>
+          <p>Space weather can disturb radio communication, GPS accuracy, satellites, aviation systems, and power infrastructure. NOAA explains that GPS systems normally compensate for a quiet ionosphere, but disturbed conditions can make positioning less reliable.</p>
+          <p>In I/O3, protection is not simple safety. The atmosphere shields and enables civilisation, but it also becomes unstable. The artwork uses this tension to show modern life as dependent on forces most viewers cannot see, measure, or control.</p>
+          <div class="source-list">
+            <a href="https://www.spaceweather.gov/impacts/space-weather-and-gps-systems">NOAA GPS Impacts</a>
+            <a href="https://www.ncei.noaa.gov/news/what-is-space-weather">NOAA Space Weather</a>
+            <a href="https://www.faa.gov/nextgen/programs/weather/awrp/space-weather">FAA Space Weather</a>
+          </div>
+        </article>
+
+        <article class="article" id="04">
+          <p class="kicker">Marker 04</p>
+          <h2>Manipulated Weather Systems</h2>
+          <p class="lead">The clouds become a surface for fear: where atmospheric science, military secrecy, and conspiracy thinking begin to blur.</p>
+          <p>Projects such as HAARP study the ionosphere using high-frequency radio transmission. The University of Alaska describes HAARP as a scientific programme for studying the upper atmosphere and radio-wave propagation, but its complexity has also made it a magnet for conspiracy theories.</p>
+          <p>This matters to the artwork because I/O3 is not trying to prove conspiracies. It studies why invisible technology generates myths. When systems are hidden, complex, or state-controlled, fear fills the gaps left by missing information.</p>
+          <div class="source-list">
+            <a href="https://haarp.gi.alaska.edu/faq">HAARP FAQ</a>
+            <a href="https://haarp.gi.alaska.edu/">About HAARP</a>
+            <a href="https://science.nasa.gov/earth/10-things-to-know-about-the-ionosphere/">NASA Ionosphere</a>
+          </div>
+        </article>
+
+        <article class="article" id="05">
+          <p class="kicker">Marker 05</p>
+          <h2>Tonal Bleaching</h2>
+          <p class="lead">The white fading sky suggests exposure, loss of evidence, damaged archives, and the point where information disappears into glare.</p>
+          <p>The pasted project text describes glitch and degradation as productive failure: not decoration, but a way of revealing damaged signal systems, censorship, unstable memory, and fragmented historical truth. Tonal bleaching visualises that same process through light.</p>
+          <p>In this reading, whiteness is not purity. It is overexposure. It is the point where the image becomes too bright to read, echoing how secrecy and media distortion can make historical events more visible and less knowable at the same time.</p>
+          <div class="source-list">
+            <a href="https://www.nasa.gov/solar-system/two-heads-are-better-than-one-icon-gold-teaming-up-to-explore-earths-interface-to-space/">NASA ICON/GOLD</a>
+            <a href="https://www.spaceweather.gov/index.php/phenomena/ionosphere">NOAA Ionosphere</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+
+        <article class="article" id="06">
+          <p class="kicker">Marker 06</p>
+          <h2>Lightning</h2>
+          <p class="lead">Lightning links natural electricity with radio pulses, radar signals, interference, and the anxious rhythm of transmission.</p>
+          <p>Duga became internationally known through its repetitive shortwave interference, nicknamed the Russian Woodpecker. Sources describe it as an over-the-horizon radar system using ionospheric skywave propagation; to listeners, it entered domestic space as an unexplained tapping sound.</p>
+          <p>Lightning therefore becomes both natural force and signal metaphor. It is sudden, unstable, and energetic. In the artwork it helps connect atmosphere, radar, sound, surveillance, and the feeling of invisible systems entering everyday life.</p>
+          <div class="source-list">
+            <a href="https://coldwar.tech/system/duga-radar">Cold War Tech Duga</a>
+            <a href="https://www.atlasobscura.com/places/cernobyl-duga-3-receiver">Atlas Obscura Duga</a>
+            <a href="https://www.weather.gov/safety/lightning-science">NOAA Lightning</a>
+          </div>
+        </article>
+
+        <article class="article" id="07">
+          <p class="kicker">Marker 07</p>
+          <h2>Gas Masks</h2>
+          <p class="lead">The masks show the human body responding to invisible danger: contamination, state secrecy, Cold War anxiety, and survival.</p>
+          <p>After Chernobyl, radiation was not visible in the ordinary way, yet it reshaped bodies, landscapes, evacuation zones, and public trust. The IAEA has also described the psychological consequences of the accident as a major public health issue linked to lack of accurate information.</p>
+          <p>Gas masks make that invisible danger bodily. They are not simply props of disaster; they are an image of the body forced to negotiate a damaged atmosphere, uncertain information, and systems too large to understand from the ground.</p>
+          <div class="source-list">
+            <a href="https://www.iaea.org/newscenter/pressreleases/chernobyl-true-scale-accident">IAEA Accident Scale</a>
+            <a href="https://www.unscear.org/unscear/ru/chernobyl.html">UNSCEAR Chornobyl</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+
+        <article class="article" id="08">
+          <p class="kicker">Marker 08</p>
+          <h2>Distorted Trees</h2>
+          <p class="lead">The trees represent First Nature under pressure: forest, atmosphere, mutation, memory, and the hidden military architecture of Duga.</p>
+          <p>Duga was physically enormous but hidden in forest near Pripyat. This makes the trees important: they are not background. They conceal, frame, and witness the collision between natural systems and Cold War infrastructure.</p>
+          <p>The distortion also connects to Chernobyl ecology. Research groups continue to study radioecology in the exclusion zone, where contamination, wildlife, fire, soil, and forest recovery exist together. Nature survives, but not innocently.</p>
+          <div class="source-list">
+            <a href="https://coldwar.tech/system/duga-radar">Cold War Tech Duga</a>
+            <a href="https://www.ceh.ac.uk/our-science/projects/radioecology-chernobyl-exclusion-zone-observatory">CEH Radioecology</a>
+            <a href="https://www.iaea.org/publications/7382/environmental-consequences-of-the-chernobyl-accident-and-their-remediation-twenty-years-of-experience">IAEA Environment</a>
+          </div>
+        </article>
+
+        <article class="article" id="09">
+          <p class="kicker">Marker 09</p>
+          <h2>Radioactive Vegetation</h2>
+          <p class="lead">Warning colours turn plant life into a contradiction: beauty, survival, mutation, contamination, and danger occupying the same ground.</p>
+          <p>The Red Forest became one of the most recognisable ecological symbols of Chernobyl because trees near the plant died after absorbing high levels of radiation. In I/O3, coloured vegetation performs that same unease without becoming literal illustration.</p>
+          <p>The point is not that nature simply ends after disaster. It changes. It becomes politically and scientifically monitored, emotionally charged, and difficult to read. The artwork keeps beauty and threat unresolved.</p>
+          <div class="source-list">
+            <a href="https://www.iaea.org/publications/7382/environmental-consequences-of-the-chernobyl-accident-and-their-remediation-twenty-years-of-experience">IAEA Environment</a>
+            <a href="https://www.ceh.ac.uk/our-science/projects/radioecology-chernobyl-exclusion-zone-observatory">CEH Radioecology</a>
+            <a href="https://www.unscear.org/unscear/ru/chernobyl.html">UNSCEAR Chornobyl</a>
+          </div>
+        </article>
+
+        <article class="article" id="10">
+          <p class="kicker">Marker 10</p>
+          <h2>Butterfly and Leaf Transition</h2>
+          <p class="lead">The butterfly is the visual centre: transformation after damage, fragile survival, mutation, and signal made organic.</p>
+          <p>Within the I/O3 framework, the butterfly connects First Nature to Third Nature. It is biological, but it also resembles a signal form: symmetrical, patterned, almost diagrammatic. Its position near the poster makes it the point where nature, propaganda, memory, and adaptation meet.</p>
+          <p>It should not be read as simple hope. It is more unstable than that. The butterfly becomes a figure for living systems that continue inside damaged environments, carrying evidence of change without fully explaining it.</p>
+          <div class="source-list">
+            <a href="https://www.ceh.ac.uk/our-science/projects/radioecology-chernobyl-exclusion-zone-observatory">CEH Radioecology</a>
+            <a href="https://www.iaea.org/publications/7382/environmental-consequences-of-the-chernobyl-accident-and-their-remediation-twenty-years-of-experience">IAEA Environment</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+
+        <article class="article" id="11">
+          <p class="kicker">Marker 11</p>
+          <h2>Chernobyl Nuclear Power Plant</h2>
+          <p class="lead">Chernobyl anchors the work historically, while Duga turns the landscape into a secret machine of energy, surveillance, atmosphere, and paranoia.</p>
+          <p>The pasted text describes the reactor as a heart, the radar as an eye, the ionosphere as a nervous system, and the radio signal as a pulse. This is the core I/O3 image: one landscape functioning as a cybernetic system across First, Second, and Third Nature.</p>
+          <p>Chernobyl also matters because secrecy shaped interpretation. The absence of trustworthy information allowed conspiracy theories to grow around Duga and the Russian Woodpecker. The artwork does not prove those theories; it studies how invisible systems become psychologically visible through fear.</p>
+          <div class="source-list">
+            <a href="https://www.iaea.org/newscenter/pressreleases/chernobyl-true-scale-accident">IAEA Chernobyl</a>
+            <a href="https://coldwar.tech/system/duga-radar">Cold War Tech Duga</a>
+            <a href="https://drive.google.com/file/d/1bcieuV96qE-1BDtMnS-Nd4oqs5YHUjQK/view">IO3 Part 02 PDF</a>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const articles = Array.from(document.querySelectorAll(".article"));
+    const menuLinks = Array.from(document.querySelectorAll(".menu a"));
+
+    function showArticle() {
+      const id = (location.hash || "#01").replace("#", "");
+      const activeId = articles.some((article) => article.id === id) ? id : "01";
+
+      articles.forEach((article) => {
+        article.classList.toggle("is-active", article.id === activeId);
+      });
+
+      menuLinks.forEach((link) => {
+        link.classList.toggle("is-active", link.getAttribute("href") === `#${activeId}`);
+      });
+    }
+
+    window.addEventListener("hashchange", showArticle);
+    showArticle();
+  </script>
+</body>
+</html>
