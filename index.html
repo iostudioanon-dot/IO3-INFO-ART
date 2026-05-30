@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>I/O Atmospheric Study</title>
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --charcoal: #141414;
+      --soft-black: #1d1d1d;
+      --white: #ffffff;
+      --muted: #b9b9b9;
+      --quiet: #767676;
+      --accent: #d92b2b;
+      --accent-soft: rgba(217, 43, 43, 0.26);
+      --line: rgba(255, 255, 255, 0.16);
+      --panel: rgba(255, 255, 255, 0.045);
+      --shadow: rgba(0, 0, 0, 0.46);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--black);
+    }
+
+    body {
+      position: relative;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--white);
+      background: var(--black);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      z-index: 0;
+      background:
+        linear-gradient(rgba(10, 10, 10, 0.08), rgba(10, 10, 10, 0.62)),
+        url("assets/gallery-context.png") center / cover no-repeat;
+      opacity: 0.56;
+      filter: grayscale(1) contrast(1.12) brightness(0.86);
+    }
+
+    body::after {
+      z-index: 0;
+      background:
+        radial-gradient(ellipse at center, transparent 0 40%, rgba(0, 0, 0, 0.58) 72%, rgba(0, 0, 0, 0.94) 100%),
+        linear-gradient(90deg, rgba(217, 43, 43, 0.11) 0 1px, transparent 1px 100%);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1680px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: clamp(20px, 3vw, 54px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(18px, 3vw, 34px);
+    }
+
+    .intro {
+      display: grid;
+      gap: 8px;
+      padding-left: clamp(0px, 1vw, 18px);
+      border-left: 2px solid var(--accent);
+    }
+
+    .intro h1 {
+      margin: 0;
+      font-size: clamp(2.6rem, 8vw, 7.8rem);
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      max-width: 11ch;
+    }
+
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.35rem);
+      font-weight: 700;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+      grid-template-areas:
+        "artwork panel"
+        "button button"
+        "all all";
+      column-gap: 0;
+      row-gap: clamp(18px, 2.4vw, 34px);
+      align-items: stretch;
+    }
+
+    .artwork-area {
+      min-width: 0;
+      display: contents;
+    }
+
+    .artwork-frame {
+      grid-area: artwork;
+      position: relative;
+      width: 100%;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: clamp(6px, 0.75vw, 12px);
+      background:
+        radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.56)),
+        rgba(10, 10, 10, 0.56);
+      border: 1px solid var(--line);
+      border-right: 0;
+      box-shadow:
+        0 36px 90px rgba(0, 0, 0, 0.72),
+        inset 0 0 90px rgba(0, 0, 0, 0.58);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .artwork-frame::before,
+    .artwork-frame::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .artwork-frame::before {
+      inset: 0;
+      border-top: 2px solid var(--accent);
+    }
+
+    .artwork-frame::after {
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(ellipse at center, transparent 0 66%, rgba(0, 0, 0, 0.36) 100%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent 14% 86%, rgba(0, 0, 0, 0.5));
+    }
+
+    .artwork-shell {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      z-index: 2;
+      background: var(--black);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.84),
+        0 22px 80px rgba(0, 0, 0, 0.82);
+    }
+
+    .artwork-shell img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      min-height: 0;
+      object-fit: contain;
+      user-select: none;
+    }
+
+    .artwork-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 42px rgba(0, 0, 0, 0.52);
+    }
+
+    .marker {
+      --x: 50%;
+      --y: 50%;
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      z-index: 3;
+      width: clamp(28px, 3.1vw, 42px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      color: rgba(255, 255, 255, 0.72);
+      background: rgba(10, 10, 10, 0.42);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+      opacity: 0.72;
+      backdrop-filter: blur(2px);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      font-size: clamp(0.78rem, 1vw, 0.95rem);
+      font-weight: 900;
+      line-height: 1;
+      transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background 160ms ease,
+        color 160ms ease,
+        opacity 160ms ease;
+    }
+
+    .marker:hover,
+    .marker:focus-visible {
+      transform: translate(-50%, -50%) scale(1.12);
+      outline: none;
+      border-color: var(--accent);
+      color: var(--black);
+      background: var(--white);
+      opacity: 1;
+      box-shadow:
+        0 0 0 3px var(--accent-soft),
+        0 10px 28px rgba(0, 0, 0, 0.46);
+    }
+
+    .marker:hover::after,
+    .marker:focus-visible::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 1px solid rgba(217, 43, 43, 0.6);
+      border-radius: inherit;
+      opacity: 0.75;
+    }
+
+    .marker.is-active {
+      color: var(--white);
+      background: var(--black);
+      border-color: var(--accent);
+      opacity: 1;
+      box-shadow:
+        0 0 0 4px var(--accent-soft),
+        0 0 28px rgba(217, 43, 43, 0.24);
+    }
+
+    .panel {
+      grid-area: panel;
+      position: relative;
+      z-index: 5;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-left: clamp(18px, 2.2vw, 34px);
+      padding: clamp(20px, 2.4vw, 34px);
+      background:
+        linear-gradient(90deg, rgba(10, 10, 10, 0.62), rgba(10, 10, 10, 0.48) 62%, rgba(10, 10, 10, 0.18)),
+        rgba(10, 10, 10, 0.08);
+      border: 0;
+      box-shadow: -18px 0 54px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(2px);
+    }
+
+    .panel-kicker {
+      margin: 0 0 34px;
+      color: var(--quiet);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .panel-number {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--accent);
+      font-size: clamp(3.8rem, 9vw, 7.2rem);
+      font-weight: 900;
+      line-height: 0.82;
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: clamp(1.7rem, 3vw, 3rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .meaning {
+      margin: 0 0 18px;
+      color: var(--white);
+      font-size: clamp(1rem, 1.25vw, 1.16rem);
+      font-weight: 800;
+    }
+
+    .interpretation {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 1.15vw, 1.08rem);
+      max-width: 38rem;
+    }
+
+    .view-all {
+      grid-area: button;
+      width: fit-content;
+      min-height: 44px;
+      padding: 12px 16px;
+      color: rgba(255, 255, 255, 0.68);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-left: 2px solid rgba(217, 43, 43, 0.52);
+      cursor: pointer;
+      font-weight: 900;
+      text-transform: uppercase;
+      transition:
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease;
+    }
+
+    .view-all:hover,
+    .view-all:focus-visible {
+      color: var(--white);
+      background: rgba(217, 43, 43, 0.1);
+      border-color: var(--accent);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .all-meanings {
+      display: none;
+      grid-column: 1 / -1;
+      grid-area: all;
+      padding-top: 4px;
+    }
+
+    .all-meanings.is-open {
+      display: block;
+    }
+
+    .meaning-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .meaning-list li {
+      min-height: 116px;
+      padding: 16px;
+      background: var(--soft-black);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .meaning-list b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--white);
+      font-size: 0.95rem;
+      line-height: 1.12;
+      text-transform: uppercase;
+    }
+
+    .meaning-list span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      flex: 1;
+    }
+
+    .meaning-list em {
+      color: var(--accent);
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    .research-button,
+    .resource-link,
+    .modal-close {
+      width: fit-content;
+      color: rgba(255, 255, 255, 0.7);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-left: 2px solid rgba(217, 43, 43, 0.55);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease;
+    }
+
+    .research-button {
+      min-height: 34px;
+      padding: 8px 10px;
+    }
+
+    .research-button:hover,
+    .research-button:focus-visible,
+    .resource-link:hover,
+    .resource-link:focus-visible,
+    .modal-close:hover,
+    .modal-close:focus-visible {
+      color: var(--white);
+      border-color: var(--accent);
+      background: rgba(217, 43, 43, 0.1);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .research-modal {
+      width: min(640px, calc(100vw - 32px));
+      margin: auto;
+      padding: 0;
+      color: var(--white);
+      background: rgba(14, 14, 14, 0.96);
+      border: 1px solid var(--line);
+      border-top: 2px solid var(--accent);
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.74);
+    }
+
+    .research-modal::backdrop {
+      background: rgba(0, 0, 0, 0.76);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-inner {
+      padding: clamp(20px, 4vw, 34px);
+    }
+
+    .modal-kicker {
+      margin: 0 0 22px;
+      color: var(--quiet);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .modal-title {
+      margin: 0 0 14px;
+      font-size: clamp(1.8rem, 5vw, 3.6rem);
+      line-height: 0.95;
+      text-transform: uppercase;
+    }
+
+    .modal-summary {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 48rem;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .resource-link {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      line-height: 1.2;
+    }
+
+    .modal-close {
+      min-height: 40px;
+      padding: 10px 14px;
+    }
+
+    @media (max-width: 980px) {
+      .gallery {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "artwork"
+          "panel"
+          "button"
+          "all";
+      }
+
+      .artwork-frame {
+        max-height: none;
+        border-right: 1px solid var(--line);
+      }
+
+      .artwork-shell img {
+        width: 100%;
+        max-height: none;
+        min-height: 0;
+      }
+
+      .panel {
+        min-height: 0;
+        height: auto;
+        margin-left: 0;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: none;
+      }
+
+      .meaning-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        padding: 18px;
+      }
+
+      .intro {
+        padding-left: 12px;
+      }
+
+      .artwork-frame {
+        min-height: 0;
+        padding: 8px;
+      }
+
+      .marker {
+        width: 28px;
+        font-size: 0.76rem;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel-kicker {
+        margin-bottom: 24px;
+      }
+
+      .meaning-list {
+        grid-template-columns: 1fr;
+      }
+
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">I/O3 INTERSECTI/ON STALKER</h1>
+      <p>Click a number to decode the artwork.</p>
+    </header>
+
+    <section class="gallery" aria-label="Interactive artwork annotation viewer">
+      <div class="artwork-area">
+        <figure class="artwork-frame">
+          <div class="artwork-shell" id="artwork-shell">
+            <img src="assets/artwork.png" alt="I/O Atmospheric Study mixed-media artwork with annotated atmospheric, ecological, and technological references.">
+          </div>
+        </figure>
+
+        <button class="view-all" type="button" id="view-all" aria-expanded="false" aria-controls="all-meanings">
+          View All Meanings
+        </button>
+      </div>
+
+      <aside class="panel" aria-live="polite" aria-label="Selected marker explanation">
+        <p class="panel-kicker">Selected marker</p>
+        <span class="panel-number" id="panel-number">01</span>
+        <h2 id="panel-title">Atmospheric Intersection</h2>
+        <p class="meaning" id="panel-meaning">The upper image shows the boundary between Earth&rsquo;s atmosphere and outer space.</p>
+        <p class="interpretation" id="panel-interpretation">It represents the fragile edge between human civilisation and unknown cosmic forces.</p>
+      </aside>
+
+      <section class="all-meanings" id="all-meanings" aria-label="All artwork marker meanings">
+        <ol class="meaning-list" id="meaning-list"></ol>
+      </section>
+    </section>
+
+    <dialog class="research-modal" id="research-modal" aria-labelledby="modal-title">
+      <div class="modal-inner">
+        <p class="modal-kicker" id="modal-kicker">Further research</p>
+        <h2 class="modal-title" id="modal-title"></h2>
+        <p class="modal-summary" id="modal-summary"></p>
+        <div class="resource-grid" id="resource-grid"></div>
+        <button class="modal-close" type="button" id="modal-close">Close</button>
+      </div>
+    </dialog>
+  </main>
+
+  <script>
+    // Marker positions are percentages relative to the displayed artwork.
+    // Adjust x and y values to fine tune placement for assets/artwork.png.
+    const meanings = [
+      {
+        number: 1,
+        title: "Atmospheric Intersection",
+        short: "The upper image shows the boundary between Earth&rsquo;s atmosphere and outer space.",
+        deeper: "It represents the fragile edge between human civilisation and unknown cosmic forces.",
+        x: 40,
+        y: 12,
+        research: "Atmosphere as threshold: the edge between planetary life, orbital systems, and unknown forces.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=earth+atmosphere+edge+of+space" },
+          { label: "Atmosphere reference", url: "https://www.nasa.gov/earth/earth-atmosphere/" }
+        ]
+      },
+      {
+        number: 2,
+        title: "Ionospheric Activity",
+        short: "Bright energy patterns suggest activity within the ionosphere.",
+        deeper: "The atmosphere is shown as an active system, not empty space.",
+        x: 23,
+        y: 23,
+        research: "The ionosphere as an active electrical layer, shaped by solar radiation and signal transmission.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=ionosphere+activity+signals" },
+          { label: "NOAA space weather", url: "https://www.swpc.noaa.gov/phenomena/ionosphere" }
+        ]
+      },
+      {
+        number: 3,
+        title: "Radiation Shield",
+        short: "The ionosphere acts as a protective barrier.",
+        deeper: "Human life depends on invisible natural systems that are easily overlooked.",
+        x: 31,
+        y: 38,
+        research: "Invisible planetary protection systems and the fragile conditions that make human life possible.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=earth+radiation+shield+atmosphere" },
+          { label: "NASA magnetosphere", url: "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/" }
+        ]
+      },
+      {
+        number: 4,
+        title: "Manipulated Weather Systems",
+        short: "The clouds suggest uncertain atmospheric disturbance.",
+        deeper: "The image questions whether nature remains natural once technology interferes with it.",
+        x: 48,
+        y: 29,
+        research: "Weather as a natural system, a political fear, and a field of technological intervention.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=weather+modification+history" },
+          { label: "Weather modification", url: "https://en.wikipedia.org/wiki/Weather_modification" }
+        ]
+      },
+      {
+        number: 5,
+        title: "Tonal Bleaching",
+        short: "The sky fades into white light.",
+        deeper: "This suggests exposure, disappearance, and the transition into the unknown.",
+        x: 83,
+        y: 24,
+        research: "Bleached light as disappearance, exposure, overdevelopment, and visual uncertainty.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=overexposure+photography+meaning" },
+          { label: "Exposure reference", url: "https://en.wikipedia.org/wiki/Exposure_(photography)" }
+        ]
+      },
+      {
+        number: 6,
+        title: "Lightning",
+        short: "Lightning represents energy, signal, instability, and transmission.",
+        deeper: "It links natural power with technological communication.",
+        x: 55,
+        y: 43,
+        research: "Lightning as both natural violence and a visual metaphor for transmission and signal.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=lightning+energy+electricity+signal" },
+          { label: "Lightning science", url: "https://www.weather.gov/safety/lightning-science" }
+        ]
+      },
+      {
+        number: 7,
+        title: "Gas Masks",
+        short: "Gas masks represent contamination, fear, survival, and Cold War anxiety.",
+        deeper: "They show the human body trying to survive inside a damaged environment.",
+        x: 45,
+        y: 61,
+        research: "Protective equipment as a symbol of contamination, fear, survival, and political threat.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=gas+masks+cold+war+history" },
+          { label: "Civil defence history", url: "https://en.wikipedia.org/wiki/Civil_defense" }
+        ]
+      },
+      {
+        number: 8,
+        title: "Distorted Trees",
+        short: "The trees distort scale and perspective.",
+        deeper: "Nature appears alive but unsettled, suggesting mutation and ecological trauma.",
+        x: 92,
+        y: 39,
+        research: "Trees as living structure, damaged witness, and distorted measurement of ecological change.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=chernobyl+forest+ecology" },
+          { label: "Red Forest", url: "https://en.wikipedia.org/wiki/Red_Forest" }
+        ]
+      },
+      {
+        number: 9,
+        title: "Radioactive Vegetation",
+        short: "Warning colours suggest contaminated plant life.",
+        deeper: "Beauty and danger exist together in a damaged landscape.",
+        x: 84,
+        y: 87,
+        research: "Contaminated vegetation and the uneasy overlap of beauty, warning colour, and danger.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=radioactive+vegetation+chernobyl" },
+          { label: "IAEA Chernobyl", url: "https://www.iaea.org/topics/chornobyl" }
+        ]
+      },
+      {
+        number: 10,
+        title: "Butterfly and Leaf Transition",
+        short: "Butterflies and leaves link nature, mutation, and transformation.",
+        deeper: "The butterfly becomes a symbol of survival and adaptation.",
+        x: 58,
+        y: 82,
+        research: "The butterfly as transformation, adaptation, and survival within a damaged landscape.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=butterfly+symbolism+transformation+art" },
+          { label: "Mutation reference", url: "https://en.wikipedia.org/wiki/Mutation" }
+        ]
+      },
+      {
+        number: 11,
+        title: "Chernobyl Nuclear Power Plant",
+        short: "Chernobyl anchors the image in real historical disaster.",
+        deeper: "It connects technology, secrecy, politics, and environmental damage.",
+        x: 74,
+        y: 43,
+        research: "Chernobyl as historical anchor: technology, secrecy, politics, radiation, and environmental aftermath.",
+        links: [
+          { label: "Video research slot", url: "https://www.youtube.com/results?search_query=chernobyl+nuclear+power+plant+history" },
+          { label: "IAEA accident archive", url: "https://www.iaea.org/newscenter/focus/chornobyl" }
+        ]
+      }
+    ];
+
+    const artworkShell = document.querySelector("#artwork-shell");
+    const panelNumber = document.querySelector("#panel-number");
+    const panelTitle = document.querySelector("#panel-title");
+    const panelMeaning = document.querySelector("#panel-meaning");
+    const panelInterpretation = document.querySelector("#panel-interpretation");
+    const viewAllButton = document.querySelector("#view-all");
+    const allMeanings = document.querySelector("#all-meanings");
+    const meaningList = document.querySelector("#meaning-list");
+    const researchModal = document.querySelector("#research-modal");
+    const modalKicker = document.querySelector("#modal-kicker");
+    const modalTitle = document.querySelector("#modal-title");
+    const modalSummary = document.querySelector("#modal-summary");
+    const resourceGrid = document.querySelector("#resource-grid");
+    const modalClose = document.querySelector("#modal-close");
+    const markerButtons = [];
+
+    function twoDigit(number) {
+      return String(number).padStart(2, "0");
+    }
+
+    function selectMeaning(item) {
+      panelNumber.textContent = twoDigit(item.number);
+      panelTitle.textContent = item.title;
+      panelMeaning.innerHTML = item.short;
+      panelInterpretation.textContent = item.deeper;
+
+      markerButtons.forEach((button) => {
+        const isSelected = Number(button.dataset.number) === item.number;
+        button.classList.toggle("is-active", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+      });
+    }
+
+    function openResearch(item) {
+      modalKicker.textContent = `Research layer ${twoDigit(item.number)}`;
+      modalTitle.textContent = item.title;
+      modalSummary.textContent = item.research;
+      resourceGrid.innerHTML = "";
+
+      item.links.forEach((link) => {
+        const resource = document.createElement("a");
+        resource.className = "resource-link";
+        resource.href = link.url;
+        resource.target = "_blank";
+        resource.rel = "noopener noreferrer";
+        resource.textContent = link.label;
+        resourceGrid.append(resource);
+      });
+
+      if (typeof researchModal.showModal === "function") {
+        researchModal.showModal();
+      }
+    }
+
+    meanings.forEach((item) => {
+      const marker = document.createElement("button");
+      marker.className = "marker";
+      marker.type = "button";
+      marker.textContent = item.number;
+      marker.dataset.number = item.number;
+      marker.style.setProperty("--x", `${item.x}%`);
+      marker.style.setProperty("--y", `${item.y}%`);
+      marker.setAttribute("aria-label", `${item.number}. ${item.title}`);
+      marker.setAttribute("aria-pressed", "false");
+      marker.addEventListener("click", () => selectMeaning(item));
+      artworkShell.append(marker);
+      markerButtons.push(marker);
+
+      const listItem = document.createElement("li");
+      listItem.innerHTML = `<b><em>${twoDigit(item.number)}</em> ${item.title}</b><span>${item.short}</span>`;
+      const researchButton = document.createElement("button");
+      researchButton.className = "research-button";
+      researchButton.type = "button";
+      researchButton.textContent = "Research";
+      researchButton.addEventListener("click", () => openResearch(item));
+      listItem.append(researchButton);
+      meaningList.append(listItem);
+    });
+
+    viewAllButton.addEventListener("click", () => {
+      const isOpen = allMeanings.classList.toggle("is-open");
+      viewAllButton.setAttribute("aria-expanded", String(isOpen));
+      viewAllButton.textContent = isOpen ? "Hide All Meanings" : "View All Meanings";
+    });
+
+    modalClose.addEventListener("click", () => {
+      researchModal.close();
+    });
+
+    selectMeaning(meanings[0]);
+  </script>
+</body>
+</html>
