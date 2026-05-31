@@ -112,6 +112,135 @@
       transform: translateY(-1px);
     }
 
+    .main-portfolio-return.transmission-return {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(235, 235, 230, 0.78);
+      border-color: rgba(183, 242, 74, 0.35);
+      background: rgba(0, 0, 0, 0.28);
+      letter-spacing: 0.05em;
+      text-shadow:
+        0.6px 0 rgba(0, 210, 255, 0.18),
+        -0.6px 0 rgba(255, 45, 45, 0.14);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 0 10px rgba(183, 242, 74, 0.035);
+      animation: returnSignalBreath 6.2s ease-in-out infinite;
+    }
+
+    .main-portfolio-return.transmission-return::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border: 1px solid transparent;
+      border-left-color: rgba(0, 210, 255, 0.18);
+      border-right-color: rgba(255, 45, 45, 0.14);
+      opacity: 0.45;
+      pointer-events: none;
+      animation: returnFrameDrift 5.4s ease-in-out infinite;
+    }
+
+    .main-portfolio-return.transmission-return::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      pointer-events: none;
+      text-shadow:
+        1px 0 rgba(0, 210, 255, 0.16),
+        -1px 0 rgba(255, 45, 45, 0.12);
+      opacity: 0;
+      animation: returnMicroSlip 8s steps(1, end) infinite;
+    }
+
+    .main-portfolio-return.transmission-return:hover {
+      color: rgba(255, 255, 248, 0.94);
+      border-color: rgba(183, 242, 74, 0.62);
+      text-shadow:
+        1px 0 rgba(0, 210, 255, 0.3),
+        -1px 0 rgba(255, 45, 45, 0.24),
+        0 0 8px rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.045),
+        0 0 14px rgba(183, 242, 74, 0.08);
+    }
+
+    .main-portfolio-return.transmission-return:focus-visible {
+      outline: 1px solid rgba(235, 235, 230, 0.48);
+      outline-offset: 0.35rem;
+      color: rgba(255, 255, 248, 0.94);
+    }
+
+    @keyframes returnSignalBreath {
+      0%, 100% {
+        opacity: 0.72;
+        transform: translateX(0);
+      }
+
+      50% {
+        opacity: 0.92;
+      }
+
+      52% {
+        transform: translateX(0.35px);
+      }
+
+      53% {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes returnFrameDrift {
+      0%, 100% {
+        opacity: 0.26;
+        transform: translate(0, 0);
+      }
+
+      48% {
+        opacity: 0.48;
+        transform: translate(0.5px, -0.3px);
+      }
+
+      50% {
+        transform: translate(-0.3px, 0.2px);
+      }
+
+      52% {
+        transform: translate(0, 0);
+      }
+    }
+
+    @keyframes returnMicroSlip {
+      0%, 92%, 100% {
+        opacity: 0;
+        transform: translate(0, 0);
+      }
+
+      93% {
+        opacity: 0.35;
+        transform: translate(0.8px, -0.3px);
+      }
+
+      94% {
+        opacity: 0;
+        transform: translate(0, 0);
+      }
+
+      97% {
+        opacity: 0.25;
+        transform: translate(-0.7px, 0.3px);
+      }
+
+      98% {
+        opacity: 0;
+        transform: translate(0, 0);
+      }
+    }
+
     .intro {
       display: grid;
       grid-template-columns: 1fr;
@@ -615,7 +744,9 @@
       }
 
       .portfolio-home {
-        position: static;
+        position: relative;
+        top: auto;
+        right: auto;
         width: fit-content;
         min-height: 40px;
         padding: 10px 12px;
@@ -662,12 +793,18 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
       }
+
+      .main-portfolio-return.transmission-return,
+      .main-portfolio-return.transmission-return::before,
+      .main-portfolio-return.transmission-return::after {
+        animation: none !important;
+      }
     }
   </style>
 </head>
 <body>
   <main class="page">
-    <a class="portfolio-home" href="http://127.0.0.1:3000/" target="_blank" rel="noopener noreferrer">Main portfolio</a>
+    <a class="portfolio-home main-portfolio-return transmission-return" href="http://127.0.0.1:3000/" target="_blank" rel="noopener noreferrer" data-text="MAIN PORTFOLIO">Main portfolio</a>
 
     <header class="intro" aria-labelledby="page-title">
       <div class="intro-title">
