@@ -13,7 +13,7 @@ This project is a restrained digital gallery page for the I/O Project portfolio.
 
 - Matte black and charcoal background.
 - White typography.
-- Red accent only where it clarifies selection or hierarchy.
+- Lime green accent only where it clarifies selection or hierarchy.
 - Distressed concrete context should remain secondary behind the artwork.
 - The butterfly and poster area is the focal point and should stay visually clear.
 
