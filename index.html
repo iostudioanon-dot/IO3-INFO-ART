@@ -79,6 +79,39 @@
       gap: clamp(18px, 3vw, 34px);
     }
 
+    .portfolio-home {
+      position: absolute;
+      top: clamp(20px, 3vw, 54px);
+      right: clamp(20px, 3vw, 54px);
+      z-index: 6;
+      min-height: 44px;
+      padding: 12px 15px;
+      color: rgba(255, 255, 255, 0.72);
+      background: rgba(10, 10, 10, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-left: 2px solid rgba(183, 242, 74, 0.58);
+      font-size: 0.82rem;
+      font-weight: 900;
+      line-height: 1;
+      text-decoration: none;
+      text-transform: uppercase;
+      backdrop-filter: blur(3px);
+      transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease;
+    }
+
+    .portfolio-home:hover,
+    .portfolio-home:focus-visible {
+      color: var(--white);
+      border-color: var(--accent);
+      background: rgba(183, 242, 74, 0.1);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
     .intro {
       display: grid;
       grid-template-columns: 1fr;
@@ -581,6 +614,14 @@
         padding: 18px;
       }
 
+      .portfolio-home {
+        position: static;
+        width: fit-content;
+        min-height: 40px;
+        padding: 10px 12px;
+        font-size: 0.76rem;
+      }
+
       .intro {
         padding-left: 12px;
       }
@@ -626,6 +667,8 @@
 </head>
 <body>
   <main class="page">
+    <a class="portfolio-home" href="http://127.0.0.1:3000/" target="_blank" rel="noopener noreferrer">Main portfolio</a>
+
     <header class="intro" aria-labelledby="page-title">
       <div class="intro-title">
         <h1 id="page-title">
