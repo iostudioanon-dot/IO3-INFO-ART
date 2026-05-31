@@ -90,12 +90,22 @@
 
     .intro h1 {
       margin: 0;
-      font-size: clamp(1.75rem, 3.2vw, 3.15rem);
-      line-height: 0.96;
       letter-spacing: 0;
       text-transform: uppercase;
       max-width: 12ch;
       overflow-wrap: break-word;
+    }
+
+    .title-line {
+      display: block;
+      font-size: clamp(1.75rem, 3.2vw, 3.15rem);
+      line-height: 0.96;
+    }
+
+    .title-line:first-child {
+      font-size: clamp(2.45rem, 4.45vw, 4.4rem);
+      line-height: 0.88;
+      margin-bottom: 6px;
     }
 
     .intro-copy {
@@ -599,7 +609,11 @@
 <body>
   <main class="page">
     <header class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">I/O3 REVEAL THE INTERSECTI/ON</h1>
+      <h1 id="page-title">
+        <span class="title-line">I/O3</span>
+        <span class="title-line">Reveal the</span>
+        <span class="title-line">intersecti/on</span>
+      </h1>
       <div class="intro-copy">
         <p>Inspired by the Japanese concept of "hide and reveal", I wanted to incorporate similar ideas into my artwork. I think this is an important part of the I/O Project because it reflects how people experience and understand the world through layers of information, observation, and interpretation. Across First Nature, Second Nature, and Third Nature, meaning is not always immediately visible. Instead, it is gradually discovered through movement, exploration, and interaction.</p>
         <p>I found this idea particularly interesting in architecture, especially Fallingwater by Frank Lloyd Wright, where the sound of the waterfall is experienced before the waterfall itself is fully revealed. I also explored similar techniques in the films of Stanley Kubrick, who often withholds information from the audience and encourages them to actively interpret what they are seeing.</p>
