@@ -81,11 +81,17 @@
 
     .intro {
       display: grid;
-      grid-template-columns: minmax(390px, 0.58fr) minmax(420px, 1fr);
-      gap: clamp(18px, 4vw, 62px);
+      grid-template-columns: minmax(390px, max-content) minmax(420px, 760px);
+      gap: clamp(12px, 1.8vw, 28px);
       align-items: start;
+      justify-content: start;
       padding-left: clamp(0px, 1vw, 18px);
       border-left: 2px solid var(--accent);
+    }
+
+    .intro-title {
+      display: grid;
+      gap: 12px;
     }
 
     .intro h1 {
@@ -110,6 +116,15 @@
       font-size: clamp(2.45rem, 4.45vw, 4.4rem);
       line-height: 0.88;
       margin-bottom: 6px;
+    }
+
+    .byline {
+      margin: 0;
+      color: var(--accent);
+      font-size: clamp(0.96rem, 1.15vw, 1.1rem);
+      font-weight: 900;
+      line-height: 1.25;
+      text-transform: none;
     }
 
     .intro-copy {
@@ -174,8 +189,7 @@
     }
 
     .artwork-frame::before {
-      inset: 0;
-      border-top: 2px solid var(--accent);
+      display: none;
     }
 
     .artwork-frame::after {
@@ -526,6 +540,7 @@
     @media (max-width: 980px) {
       .intro {
         grid-template-columns: 1fr;
+        gap: 18px;
       }
 
       .gallery {
@@ -613,11 +628,14 @@
 <body>
   <main class="page">
     <header class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">
-        <span class="title-line">I/O3</span>
-        <span class="title-line">Reveal the</span>
-        <span class="title-line">intersecti/on</span>
-      </h1>
+      <div class="intro-title">
+        <h1 id="page-title">
+          <span class="title-line">I/O3</span>
+          <span class="title-line">Reveal the</span>
+          <span class="title-line">intersecti/on</span>
+        </h1>
+        <p class="byline">By Luke Hillhouse</p>
+      </div>
       <div class="intro-copy">
         <p>Inspired by the Japanese concept of "hide and reveal", I wanted to incorporate similar ideas into my artwork. I think this is an important part of the I/O Project because it reflects how people experience and understand the world through layers of information, observation, and interpretation. Across First Nature, Second Nature, and Third Nature, meaning is not always immediately visible. Instead, it is gradually discovered through movement, exploration, and interaction.</p>
         <p>I found this idea particularly interesting in architecture, especially Fallingwater by Frank Lloyd Wright, where the sound of the waterfall is experienced before the waterfall itself is fully revealed. I also explored similar techniques in the films of Stanley Kubrick, who often withholds information from the audience and encourages them to actively interpret what they are seeing.</p>
