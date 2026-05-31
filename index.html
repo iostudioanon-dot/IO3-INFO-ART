@@ -81,7 +81,7 @@
 
     .intro {
       display: grid;
-      grid-template-columns: minmax(390px, 0.72fr) minmax(420px, 760px);
+      grid-template-columns: minmax(390px, max-content) minmax(420px, 760px);
       gap: clamp(12px, 1.8vw, 28px);
       align-items: start;
       justify-content: start;
@@ -92,7 +92,6 @@
     .intro-title {
       display: grid;
       gap: 12px;
-      justify-self: end;
     }
 
     .intro h1 {
